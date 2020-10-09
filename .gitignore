@@ -1,0 +1,8 @@
+# Please output directory and local configuration
+plz-out
+.plzconfig.local
+
+.yarn/*
+!.yarn/releases
+!.yarn/BUILD
+.pnp.js

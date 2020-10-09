@@ -1,0 +1,54 @@
+def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFile:str = '//:pnp.js'):
+    deps_rule = genrule(
+        name = name + '#find_deps',
+        cmd = 'mkdir -p $PKG_DIR && ln -P $SRCS_HELPER $PKG_DIR/find-deps.js && cd $PKG_DIR && TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP find-deps.js',
+        srcs = {
+            'PNP': [pnpFile],
+            'HELPER': ['//tools/yarn-helpers:find-deps.js'],
+        },
+        tools = [
+            'node'
+        ],
+        post_build = lambda _name, output: [
+            add_dep(name, '//.yarn:' + dep)
+            for dep in output
+        ]
+    )
+
+    bin_path_file = genrule(
+        name = name + '#locate_bin',
+        cmd = 'mkdir -p $PKG_DIR && ln -P $SRCS_HELPER $PKG_DIR/locate-bin.js && cd $PKG_DIR && TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP locate-bin.js > $OUT',
+        srcs = {
+            'PNP': [pnpFile],
+            'SRC': srcs,
+        },
+        needs_transitive_deps = True,
+        deps = [deps_rule],
+        outs = ['binpath'],
+        tools = [
+            'node'
+        ],
+    )
+
+    genrule(
+        name = name,
+        cmd = ' && '.join([
+            'ln -P "$SRCS_LOCATE_BIN_HELPER" $PKG_DIR/locate-bin.js',
+            'cd $PKG_DIR',
+            'BIN="$(BIN_NAME=' + bin + ' TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP locate-bin.js)"',
+            '$TOOL -r $TMP_DIR/$SRCS_PNP $BIN ' + ' '.join(args),
+            'cp -r $OUTS ../',
+        ]),
+        srcs = {
+            'PNP': [pnpFile],
+            'SRCS': srcs,
+            'LOCATE_BIN_HELPER': ['//tools/yarn-helpers:locate-bin.js'],
+        },
+        deps = [pnpFile, deps_rule],
+        needs_transitive_deps = True,
+        outs = outs,
+        output_is_complete = True,
+        tools = [
+            'node'
+        ]
+    )
