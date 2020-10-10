@@ -1,3 +1,10 @@
+/**
+ * Finds a path which can be used to run tools with `node -r .pnp.js <path>`
+ *
+ * This script behaves the same with `yarn bin` which refuses to run inside
+ * the Please virtual build directory.
+ */
+
 const pnp = require('pnpapi');
 const path = require('path');
 
@@ -16,6 +23,8 @@ for (const [name, ref] of packageInfo.packageDependencies) {
         console.log(path);
     }
 }
+
+process.exit();
 
 function qualifyBinPath(pkgName, pkgReference, binPath) {
     const info = pnp.getPackageInformation({

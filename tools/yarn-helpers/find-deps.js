@@ -1,12 +1,40 @@
+/**
+ * Enumerates third-party npm dependencies.
+ *
+ * It is intended to be used with Please specific post_build and add_dep
+ * documented at https://please.build/post_build.html.
+ * See rules.build_defs for usage.
+ */
+
 const pnp = require('pnpapi');
 const path = require('path');
 
 const targetPackageLocator = pnp.findPackageLocator(process.env.TARGET_PACKAGE);
 
 const depsMap = new Map();
-traverseDeps(targetPackageLocator);
+traverseDeps(depsMap, targetPackageLocator);
 
-function traverseDeps(locator) {
+// Ensure no duplication but it is uncertain if there is.
+const depLabels = new Set();
+
+for (const info of depsMap.values()) {
+    const label = qualifyLabel(info.packageLocation);
+
+    if (label) {
+        depLabels.add(label);
+    }
+}
+
+for (const label of depLabels) {
+    console.log(label);
+}
+
+process.exit();
+
+/**
+ * Populates depMap
+ */
+function traverseDeps(depsMap, locator) {
     const key = JSON.stringify(locator);
     if (depsMap.has(key)) {
         return;
@@ -30,20 +58,10 @@ function traverseDeps(locator) {
     }
 }
 
-const depLabels = new Set();
-
-for (const info of depsMap.values()) {
-    const label = qualifyLabel(info.packageLocation);
-
-    if (label) {
-        depLabels.add(label);
-    }
-}
-
-for (const label of depLabels) {
-    console.log(label);
-}
-
+/**
+ * Given physical location of npm dependency, create a label as defined in .yarn/BUILD.
+ * Returns null if it is not a npm dependency.
+ */
 function qualifyLabel(location) {
     const parts = location.split(path.sep);
 

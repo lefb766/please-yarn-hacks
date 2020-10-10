@@ -1,6 +1,12 @@
 def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFile:str = '//:pnp.js'):
+    '''Run tools from npm package.'''
+
+    # Resolve dependencies for this Yarn workspace.
     deps_rule = genrule(
         name = name + '#find_deps',
+
+        # PnP requires the helper to be inside Yarn defined workspace.
+        # Symlink won't work, so we create a hardlink.
         cmd = 'mkdir -p $PKG_DIR && ln -P $SRCS_HELPER $PKG_DIR/find-deps.js && cd $PKG_DIR && TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP find-deps.js',
         srcs = {
             'PNP': [pnpFile],
@@ -15,6 +21,7 @@ def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFil
         ]
     )
 
+    # Locate the bin path and run it.
     genrule(
         name = name,
         cmd = ' && '.join([
