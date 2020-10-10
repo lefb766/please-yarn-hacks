@@ -1,4 +1,4 @@
-# About
+## About
 This repo is an experimental showcase on how Please (https://please.build), a Bazel-clone build system, can work with PnP enabled Yarn (Berry).
 
 The goal of this repo is to be a referential setup rather than to be an importable set of rules which people can rely on.
