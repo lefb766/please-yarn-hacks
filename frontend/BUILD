@@ -4,7 +4,7 @@ yarn_run_bin(
     name = 'build',
     bin = 'rollup',
     args = ['-c'],
-    srcs = glob(['**']) + ['.babelrc'],
+    srcs = glob(['**'], hidden=True),
     outs = ["dist"]
 )
 
