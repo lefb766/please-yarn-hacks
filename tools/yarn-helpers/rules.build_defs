@@ -15,21 +15,6 @@ def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFil
         ]
     )
 
-    bin_path_file = genrule(
-        name = name + '#locate_bin',
-        cmd = 'mkdir -p $PKG_DIR && ln -P $SRCS_HELPER $PKG_DIR/locate-bin.js && cd $PKG_DIR && TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP locate-bin.js > $OUT',
-        srcs = {
-            'PNP': [pnpFile],
-            'SRC': srcs,
-        },
-        needs_transitive_deps = True,
-        deps = [deps_rule],
-        outs = ['binpath'],
-        tools = [
-            'node'
-        ],
-    )
-
     genrule(
         name = name,
         cmd = ' && '.join([
