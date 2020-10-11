@@ -51,7 +51,7 @@ function traverseDeps(depsMap, locator) {
             continue;
         }
 
-        traverseDeps({
+        traverseDeps(depsMap, {
             name: name,
             reference: ref,
         });
