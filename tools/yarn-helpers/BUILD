@@ -11,6 +11,13 @@ export_file(
 )
 
 export_file(
+    name = 'prepare-run.js',
+    src = 'prepare-run.js',
+    visibility = ['PUBLIC']
+)
+
+
+export_file(
     name = 'rules.build_defs',
     src = 'rules.build_defs',
     visibility = ['PUBLIC']

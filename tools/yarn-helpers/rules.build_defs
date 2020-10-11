@@ -1,25 +1,7 @@
 def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFile:str = '//:pnp.js'):
     '''Run tools from npm package.'''
 
-    # Resolve dependencies for this Yarn workspace.
-    deps_rule = genrule(
-        name = name + '#find_deps',
-
-        # PnP requires the helper to be inside Yarn defined workspace.
-        # Symlink won't work, so we create a hardlink.
-        cmd = 'mkdir -p $PKG_DIR && ln -P $SRCS_HELPER $PKG_DIR/find-deps.js && cd $PKG_DIR && TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP find-deps.js',
-        srcs = {
-            'PNP': [pnpFile],
-            'HELPER': ['//tools/yarn-helpers:find-deps.js'],
-        },
-        tools = [
-            'node'
-        ],
-        post_build = lambda _name, output: [
-            add_dep(name, '//.yarn:' + dep)
-            for dep in output
-        ]
-    )
+    deps_rule = _add_npm_deps(name, pnpFile)
 
     # Locate the bin path and run it.
     genrule(
@@ -42,5 +24,63 @@ def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFil
         output_is_complete = True,
         tools = [
             'node'
+        ]
+    )
+
+def yarn_run(name:str, srcs:list, outs:list, pnpFile:str = '//:pnp.js'):
+    '''Run script in package.json'''
+
+    deps_rule = _add_npm_deps(name, pnpFile)
+
+    genrule(
+        name = name,
+        cmd = ' && '.join([
+            'mkdir -p .bin',
+            'ln -P "$SRCS_HELPER" $PKG_DIR/prepare-run.js',
+            'cd $PKG_DIR',
+            ' '.join([
+                'BIN_DIR="$TMP_DIR/.bin"',
+                'ENTRYPOINT_PATH="$TMP_DIR/script"',
+                'PNP_PATH="$TMP_DIR/$SRCS_PNP"',
+                f'SCRIPT_NAME={name}',
+                'PACKAGE_JSON_PATH="$TMP_DIR/$SRCS_PACKAGE_JSON"',
+                '$TOOL -r $TMP_DIR/$SRCS_PNP ./prepare-run.js'
+            ]),
+            'PATH="$TMP_DIR/.bin:$PATH" $TMP_DIR/script',
+            'cp -r $OUTS ../',
+        ]),
+        srcs = {
+            'PNP': [pnpFile],
+            'PACKAGE_JSON': ['package.json'],
+            'SRCS': srcs,
+            'HELPER': ['//tools/yarn-helpers:prepare-run.js'],
+        },
+        deps = [pnpFile, deps_rule],
+        needs_transitive_deps = True,
+        outs = outs,
+        output_is_complete = True,
+        tools = [
+            'node'
+        ]
+    )
+
+def _add_npm_deps(target_label:str, pnpFile:str):
+    # Resolve dependencies for this Yarn workspace.
+    return genrule(
+        name = target_label + '#find_deps',
+
+        # PnP requires the helper to be inside Yarn defined workspace.
+        # Symlink won't work, so we create a hardlink.
+        cmd = 'mkdir -p $PKG_DIR && ln -P $SRCS_HELPER $PKG_DIR/find-deps.js && cd $PKG_DIR && TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP find-deps.js',
+        srcs = {
+            'PNP': [pnpFile],
+            'HELPER': ['//tools/yarn-helpers:find-deps.js'],
+        },
+        tools = [
+            'node'
+        ],
+        post_build = lambda _name, output: [
+            add_dep(target_label, '//.yarn:' + dep)
+            for dep in output
         ]
     )

@@ -5,7 +5,7 @@ The goal of this repo is to be a referential setup rather than to be an importab
 
 ## Roadmap
 - [x] Run build tools from third-party npm package
-- [ ] Reuse npm scripts defined in package.json
+- [x] Reuse npm scripts defined in package.json
 - [ ] Tool specific rule example which can be used throughout the repo
 - [ ] Hydrate `node_modules` for a package (Useful for deploy image)
 
