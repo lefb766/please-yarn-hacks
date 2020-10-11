@@ -11,7 +11,7 @@ def yarn_run_bin(name:str, bin:str, args:list = [], srcs:list, outs:list, pnpFil
             'cd $PKG_DIR',
             'BIN="$(BIN_NAME=' + bin + ' TARGET_PACKAGE=$PKG $TOOL -r $TMP_DIR/$SRCS_PNP locate-bin.js)"',
             '$TOOL -r $TMP_DIR/$SRCS_PNP $BIN ' + ' '.join(args),
-            'cp -r $OUTS ../',
+            'for out in $OUTS; do mkdir -p "$TMP_DIR/$(dirname $out)"; mv "$out" "$TMP_DIR/$out"; done',
         ]),
         srcs = {
             'PNP': [pnpFile],
@@ -47,7 +47,7 @@ def yarn_run(name:str, srcs:list, outs:list, pnpFile:str = '//:pnp.js'):
                 '$TOOL -r $TMP_DIR/$SRCS_PNP ./prepare-run.js'
             ]),
             'PATH="$TMP_DIR/.bin:$PATH" $TMP_DIR/script',
-            'cp -r $OUTS ../',
+            'for out in $OUTS; do mkdir -p "$TMP_DIR/$(dirname $out)"; mv "$out" "$TMP_DIR/$out"; done',
         ]),
         srcs = {
             'PNP': [pnpFile],
